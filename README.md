@@ -37,25 +37,18 @@ targets the IDE rather than Android and has a separate IntelliJ Platform depende
 The Marketplace plugin ID is `com.vinted.bloom`. Keep the plugin version in `build.gradle.kts` independent from the
 Android Bloom library version.
 
-Before the first release, create the `com.vinted.bloom` plugin entry in JetBrains Marketplace. Add the Marketplace
-token as a GitHub repository secret named `JETBRAINS_MARKETPLACE_TOKEN`.
+Create the `com.vinted.bloom` listing in JetBrains Marketplace and add `JETBRAINS_MARKETPLACE_TOKEN` as a GitHub
+repository secret. The GitHub Actions workflow builds and tests pull requests and pushes to `master`. It publishes
+when a `bloom-plugin-v*` tag is pushed, provided the tag matches the version in `build.gradle.kts`.
 
-The publish workflow uploads the plugin using this token. Author-side signing is optional: if `CERTIFICATE_CHAIN`,
-`PRIVATE_KEY`, and `PRIVATE_KEY_PASSWORD` are provided to Gradle, it signs the plugin ZIP before upload. Without those
-values, Gradle skips author-side signing and JetBrains Marketplace signs the uploaded plugin.
-
-The GitHub Actions workflow runs tests and builds the plugin for pull requests and pushes to `master`. It publishes
-only when a `bloom-plugin-v*` tag is pushed, and checks that the tag matches the version in `build.gradle.kts`.
-Create a release by updating the version, merging the change, and creating a matching tag:
+To release, update the version, merge the change, then push a matching tag. For version `0.1.21`, use:
 
 ```text
 bloom-plugin-v0.1.21
 ```
 
-For example, version `0.1.21` is released with tag `bloom-plugin-v0.1.21`. The first Marketplace upload may need to be
-done manually to create and configure the listing before automated uploads can publish updates.
-
-To verify the release locally without publishing:
+The first Marketplace upload must be made manually after creating the listing. To build the plugin locally without
+publishing:
 
 ```text
 ./gradlew test buildPlugin
