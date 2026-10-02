@@ -38,15 +38,11 @@ The Marketplace plugin ID is `com.vinted.bloom`. Keep the plugin version in `bui
 Android Bloom library version.
 
 Before the first release, create the `com.vinted.bloom` plugin entry in JetBrains Marketplace. Add the Marketplace
-token as a repository secret named `JETBRAINS_MARKETPLACE_TOKEN`. Configure a GitHub Actions environment named
-`jetbrains-marketplace` with these signing secrets:
+token as a GitHub repository secret named `JETBRAINS_MARKETPLACE_TOKEN`.
 
-- `CERTIFICATE_CHAIN`
-- `PRIVATE_KEY`
-- `PRIVATE_KEY_PASSWORD`
-
-The certificate chain and private key may be stored as the base64-encoded values accepted by the IntelliJ Platform
-Gradle Plugin. They must never be committed to the repository.
+The publish workflow uploads the plugin using this token. Author-side signing is optional: if `CERTIFICATE_CHAIN`,
+`PRIVATE_KEY`, and `PRIVATE_KEY_PASSWORD` are provided to Gradle, it signs the plugin ZIP before upload. Without those
+values, Gradle skips author-side signing and JetBrains Marketplace signs the uploaded plugin.
 
 The GitHub Actions workflow runs tests and builds the plugin for pull requests and pushes to `master`. It publishes
 only when a `bloom-plugin-v*` tag is pushed, and checks that the tag matches the version in `build.gradle.kts`.
