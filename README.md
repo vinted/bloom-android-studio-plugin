@@ -1,4 +1,4 @@
-# Bloom Android Foundation Plugin
+# Bloom Android Studio Plugin
 
 An Android Studio plugin that shows Android Bloom foundation values in the editor gutter, next to the line numbers.
 
