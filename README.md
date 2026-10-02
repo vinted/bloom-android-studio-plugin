@@ -37,25 +37,27 @@ targets the IDE rather than Android and has a separate IntelliJ Platform depende
 The Marketplace plugin ID is `com.vinted.bloom`. Keep the plugin version in `build.gradle.kts` independent from the
 Android Bloom library version.
 
-Before the first release, create the `com.vinted.bloom` plugin entry in JetBrains Marketplace. The release pipeline
-expects these Jenkins Secret Text credentials:
+Before the first release, create the `com.vinted.bloom` plugin entry in JetBrains Marketplace. Add the Marketplace
+token as a repository secret named `JETBRAINS_MARKETPLACE_TOKEN`. Configure a GitHub Actions environment named
+`jetbrains-marketplace` with these signing secrets:
 
-- `jetbrains-marketplace-publish-token` → `PUBLISH_TOKEN`
-- `jetbrains-marketplace-certificate-chain` → `CERTIFICATE_CHAIN`
-- `jetbrains-marketplace-private-key` → `PRIVATE_KEY`
-- `jetbrains-marketplace-private-key-password` → `PRIVATE_KEY_PASSWORD`
+- `CERTIFICATE_CHAIN`
+- `PRIVATE_KEY`
+- `PRIVATE_KEY_PASSWORD`
 
 The certificate chain and private key may be stored as the base64-encoded values accepted by the IntelliJ Platform
 Gradle Plugin. They must never be committed to the repository.
 
-Create a plugin release by updating the version, merging the change, and creating a tag with the matching version:
+The GitHub Actions workflow runs tests and builds the plugin for pull requests and pushes to `master`. It publishes
+only when a `bloom-plugin-v*` tag is pushed, and checks that the tag matches the version in `build.gradle.kts`.
+Create a release by updating the version, merging the change, and creating a matching tag:
 
 ```text
 bloom-plugin-v0.1.21
 ```
 
-The plugin Jenkins pipeline runs tests and builds the ZIP for every change. For a `bloom-plugin-v*` tag it also checks
-that the tag matches the Gradle project version, signs the plugin, and runs `publishPlugin`.
+For example, version `0.1.21` is released with tag `bloom-plugin-v0.1.21`. The first Marketplace upload may need to be
+done manually to create and configure the listing before automated uploads can publish updates.
 
 To verify the release locally without publishing:
 
