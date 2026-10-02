@@ -1,0 +1,30 @@
+<idea-plugin>
+    <id>com.vinted.bloom</id>
+    <name>Bloom Foundation Preview</name>
+    <vendor email="android@vinted.com" url="https://github.com/vinted/bloom-android-studio-plugin">Vinted</vendor>
+    <description><![CDATA[
+        Shows resolved Android Bloom foundation values beside source lines. Colors are rendered as swatches,
+        drawable resources as previews, and dimensions, shadows, opacity, typography, and other foundation values
+        are available through the gutter tooltip.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <codeInsight.lineMarkerProvider language="kotlin"
+                implementationClass="com.vinted.bloom.plugin.editor.BloomFoundationLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="JAVA"
+                implementationClass="com.vinted.bloom.plugin.editor.BloomFoundationLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="XML"
+                implementationClass="com.vinted.bloom.plugin.editor.BloomFoundationLineMarkerProvider"/>
+    </extensions>
+
+    <actions>
+        <action id="BloomFoundationPreview.Refresh"
+                class="com.vinted.bloom.plugin.action.RefreshBloomFoundationCatalogAction"
+                text="Refresh Bloom Foundation Values"
+                description="Refresh Bloom foundation values shown in the editor gutter">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>
