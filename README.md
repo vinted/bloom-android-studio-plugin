@@ -62,3 +62,7 @@ The gutter marker is the primary affordance because it stays beside the line num
 drawable preview. Hovering shows the resolved value and source file. A future settings/tool-window surface can use
 Jewel/IntelliJ UI components for filtering, theme selection, and a full token-resolution chain without coupling the
 editor marker to Compose Desktop.
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
