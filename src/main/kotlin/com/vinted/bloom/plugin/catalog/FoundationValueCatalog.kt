@@ -207,6 +207,7 @@ class FoundationValueCatalog(private val project: Project) {
                     true
                 }
 
+                scanBloomFoundationSourceJars(values)
                 scanBloomAssetAars(resourceValues, resourceEntries, darkResourceEntries)
                 decorateFoundationPreviews(values, resourceEntries)
 
@@ -327,7 +328,23 @@ class FoundationValueCatalog(private val project: Project) {
 
             private fun parseGeneratedFoundation(file: VirtualFile, values: MutableMap<String, FoundationValue>) {
                 val text = runCatching { VfsUtil.loadText(file) }.getOrNull() ?: return
-                val type = file.nameWithoutExtension.removePrefix("Bloom")
+                parseGeneratedFoundation(
+                    text = text,
+                    fileName = file.nameWithoutExtension,
+                    sourcePath = VfsUtil.virtualToIoFile(file).toPath(),
+                    values = values,
+                    overwrite = true,
+                )
+            }
+
+            private fun parseGeneratedFoundation(
+                text: String,
+                fileName: String,
+                sourcePath: Path,
+                values: MutableMap<String, FoundationValue>,
+                overwrite: Boolean,
+            ) {
+                val type = fileName.removePrefix("Bloom")
                 val theme = themeProperty(type) ?: return
                 PROPERTY_WITH_DOC.findAll(text).forEach { match ->
                     val documentation = match.groupValues[1].trim()
@@ -341,14 +358,19 @@ class FoundationValueCatalog(private val project: Project) {
                         else -> raw
                     }
                     val color = if (kind == FoundationKind.COLOR) ResourceValueResolver.parseColor(resolved) else null
-                    values["BloomTheme.$theme.$property"] = FoundationValue(
+                    val value = FoundationValue(
                         expression = "BloomTheme.$theme.$property",
                         kind = kind,
                         label = property,
                         resolvedValue = displayRaw(kind, resolved),
-                        sourcePath = VfsUtil.virtualToIoFile(file).toPath(),
+                        sourcePath = sourcePath,
                         preview = color?.let { FoundationPreview.ColorSwatch(it) } ?: FoundationPreview.Metric,
                     )
+                    if (overwrite) {
+                        values["BloomTheme.$theme.$property"] = value
+                    } else {
+                        values.putIfAbsent("BloomTheme.$theme.$property", value)
+                    }
                 }
             }
 
@@ -375,14 +397,52 @@ class FoundationValueCatalog(private val project: Project) {
                 }
             }
 
+            private fun scanBloomFoundationSourceJars(values: MutableMap<String, FoundationValue>) {
+                val roots = bloomGradleCacheRoots()
+                val sourceJars = roots.flatMap { root ->
+                    runCatching {
+                        Files.walk(root).use { stream ->
+                            stream
+                                .filter { path ->
+                                    path.fileName.toString().endsWith("-sources.jar") &&
+                                        path.fileName.toString().startsWith("android-bloom-")
+                                }
+                                .toList()
+                        }
+                    }.getOrDefault(emptyList())
+                }
+
+                sourceJars.forEach { sourceJar ->
+                    runCatching {
+                        ZipFile(sourceJar.toFile()).use { zip ->
+                            zip.entries().asSequence()
+                                .filter { entry ->
+                                    !entry.isDirectory &&
+                                        entry.name.startsWith("com/vinted/bloom/") &&
+                                        entry.name.substringAfterLast('/').startsWith("Bloom") &&
+                                        entry.name.endsWith(".kt")
+                                }
+                                .forEach { source ->
+                                    val text = zip.getInputStream(source).use { it.readBytes().toString(Charsets.UTF_8) }
+                                    parseGeneratedFoundation(
+                                        text = text,
+                                        fileName = source.name.substringAfterLast('/').removeSuffix(".kt"),
+                                        sourcePath = sourceJar,
+                                        values = values,
+                                        overwrite = false,
+                                    )
+                                }
+                        }
+                    }
+                }
+            }
+
             private fun scanBloomAssetAars(
                 values: MutableMap<String, ResourceValue>,
                 entries: MutableMap<String, ResourceEntry>,
                 darkEntries: MutableMap<String, ResourceEntry>,
             ) {
-                val roots = listOfNotNull(
-                    System.getProperty("user.home")?.let { Paths.get(it, ".gradle/caches/modules-2/files-2.1/com.vinted") },
-                ).filter { Files.isDirectory(it) }
+                val roots = bloomGradleCacheRoots()
                 roots.flatMap { root ->
                     runCatching {
                         Files.walk(root).use { stream ->
@@ -434,6 +494,11 @@ class FoundationValueCatalog(private val project: Project) {
                     }
                 }
             }
+
+            private fun bloomGradleCacheRoots(): List<Path> = sequenceOf(
+                System.getenv("GRADLE_USER_HOME")?.let { Paths.get(it, "caches/modules-2/files-2.1/com.vinted") },
+                System.getProperty("user.home")?.let { Paths.get(it, ".gradle/caches/modules-2/files-2.1/com.vinted") },
+            ).filterNotNull().distinct().filter { Files.isDirectory(it) }.toList()
 
             private fun drawableDensityRank(resourceName: String): Int = when {
                 "-xxxhdpi" in resourceName -> 4

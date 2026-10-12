@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.vinted.bloom"
-version = "0.1.22"
+version = "0.1.23"
 
 repositories {
     mavenCentral()
